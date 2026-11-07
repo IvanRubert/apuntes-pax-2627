@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: forgejo
+      POSTGRES_PASSWORD: forgejo
+      POSTGRES_DB: forgejo
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:16
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+      FORGEJO__database__DB_TYPE: postgres
+      FORGEJO__database__HOST: db:5432
+      FORGEJO__database__NAME: forgejo
+      FORGEJO__database__USER: forgejo
+      FORGEJO__database__PASSWD: forgejo
+      FORGEJO__server__DISABLE_SSH: "true"
+      FORGEJO__server__DOMAIN: forgejo.localhost
+      FORGEJO__server__ROOT_URL: https://forgejo.localhost/
+    volumes:
+      - ./forgejo:/data
+
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    depends_on:
+      - forgejo
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./pages:/usr/share/nginx/pages:ro
+      - ./nginx/certs/daw.crt:/etc/nginx/certs/daw.crt:ro
+      - ./nginx/certs/daw.key:/etc/nginx/certs/daw.key:ro

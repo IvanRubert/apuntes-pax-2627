@@ -1,0 +1,7 @@
+forgejo/
+postgres/
+certs/
+*.key
+*.csr
+*.srl
+*.crt
